@@ -14,4 +14,4 @@ if __name__ == '__main__':
     metrics_str = iw.save_metrics()
     # stdout
     for string in metrics_str:
-        print(string)
+        print(string, end='')

@@ -51,9 +51,9 @@ class InferenceWrapper:
     def save_metrics(self) -> Iterable[str]:
         "Returns the saved lines as a list of strings"
         metrics_str = [
-            f'Accuracy:\t{self.acc}',
-            f'Avg. distance:\t{self.avg_dist}',
-            f'Wall time:\t{str(self.wall)[:-7]}'
+            f'Accuracy:\t{self.acc}\n',
+            f'Avg. distance:\t{self.avg_dist}\n',
+            f'Wall time:\t{str(self.wall)[:-7]}\n',
         ]
         makedirs(self.cfg['paths']['results'], exist_ok=True)
         path_to_metrics = join(self.cfg['paths']['results'], 'metrics.txt')
