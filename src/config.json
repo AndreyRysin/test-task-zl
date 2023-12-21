@@ -5,7 +5,8 @@
         "results": "/root/results"
     },
     "inference": {
-        "batch_size": 16,
+        "model_name": "efficient",
+        "batch_size": 3,
         "activation_map_size": 256
     },
     "metrics": {

@@ -27,7 +27,7 @@ class InferenceWrapper:
         # loop over tasks
         for folder, task_img_ids in tqdm(img_ids.items()):
             # init
-            inferencer = Inferencer(self.cfg, 'inception_v3')
+            inferencer = Inferencer(self.cfg)
             # load data
             task_path = join(self.cfg['paths']['data'], folder)
             for img_id in task_img_ids:

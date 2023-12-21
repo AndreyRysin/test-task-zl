@@ -13,7 +13,7 @@ from PIL import Image
 from PIL.Image import Image as ImageType
 from torch import FloatTensor, nn
 from torch.nn import Module
-from torchvision.transforms._presets import ImageClassification
+from torchvision.transforms._presets import ImageClassification, InterpolationMode
 
 from image_handler import ImageHandler
 
@@ -21,11 +21,11 @@ from image_handler import ImageHandler
 class Inferencer:
     df_coords_columns = ['true_x', 'true_y', 'pred_x', 'pred_y']
 
-    def __init__(self, config: Dict[str, Dict[str, Any]], model_name: str) -> None:
+    def __init__(self, config: Dict[str, Dict[str, Any]]) -> None:
         self.cfg = config
         self.images: List[ImageHandler] = []
         self.device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-        self.backbone, self.weight, self.preprocess_fn = self._init_backbone(model_name)
+        self.backbone, self.weight, self.preprocess_fn = self._init_backbone()
         size_ = int(self.cfg['inference']['activation_map_size'])
         self.activation_map_shape = (size_, size_)
 
@@ -77,32 +77,46 @@ class Inferencer:
         """
         return DataFrame(data=self.coords, columns=self.df_coords_columns)
 
-    def _init_backbone(
-        self, model_name: str
-    ) -> Tuple[Module, ndarray, Callable[[ImageType], FloatTensor]]:
+    def _init_backbone(self) -> Tuple[Module, ndarray, Callable[[ImageType], FloatTensor]]:
         """
         Return:
             backbone, weight, preprocess
         """
-        if model_name == 'inception_v3':
+        if self.cfg['inference']['model_name'] == 'inception_v3':
             model = models.inception_v3(aux_logits=False)
             model_weights = torch.load(join(self.cfg['paths']['models'], 'inception_v3_google-0cc3c7bd.pth'))
             model.load_state_dict(model_weights, strict=False)
             backbone = nn.Sequential(*list(model.children())[:-3])
             weight = np.mean(np.squeeze(list(backbone[17].children())[-1].conv.weight.data.numpy()), axis=0)
             preprocess_fn = partial(ImageClassification, crop_size=299, resize_size=342)
-        elif model_name == 'resnet101':
+        elif self.cfg['inference']['model_name'] == 'resnet101':
+            model = models.resnet101()
             model_weights = torch.load(join(self.cfg['paths']['models'], 'resnet101-cd907fc2.pth'))
-            model = models.resnet101(weights=model_weights)
+            model.load_state_dict(model_weights, strict=False)
             backbone = nn.Sequential(*list(model.children())[:-2])
             weight = np.squeeze(list(backbone.parameters())[-1].data.numpy())
             preprocess_fn = partial(ImageClassification, crop_size=224)
-        elif model_name == 'vgg19':
+        elif self.cfg['inference']['model_name'] == 'vgg19':
+            model = models.vgg19()
             model_weights = torch.load(join(self.cfg['paths']['models'], 'vgg19-dcbb9e9d.pth'))
-            model = models.vgg19(weights=model_weights)
+            model.load_state_dict(model_weights, strict=False)
             backbone = nn.Sequential(*list(model.children())[:-1])
             weight = np.mean(np.squeeze(list(backbone.parameters())[-2].data.numpy()), axis=(0, 2, 3))
             preprocess_fn = partial(ImageClassification, crop_size=224)
+        elif self.cfg['inference']['model_name'] == 'efficient':
+            model = models.efficientnet_v2_l()
+            model_weights = torch.load(join(self.cfg['paths']['models'], 'efficientnet_v2_l-59c71312.pth'))
+            model.load_state_dict(model_weights, strict=False)
+            backbone = nn.Sequential(*list(model.children())[:-2])
+            weight = np.squeeze(list(backbone.parameters())[-1].data.numpy())
+            preprocess_fn = partial(
+                ImageClassification,
+                crop_size=480,
+                resize_size=480,
+                interpolation=InterpolationMode.BICUBIC,
+                mean=(0.5, 0.5, 0.5),
+                std=(0.5, 0.5, 0.5),
+            )
         else:
             raise ValueError('Unknown model name')
         backbone.eval()
