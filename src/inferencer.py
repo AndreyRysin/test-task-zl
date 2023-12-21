@@ -31,9 +31,13 @@ class Inferencer:
 
     def add_data_item(self, path_to_img: str, path_to_json: str) -> None:
         with open(path_to_json, 'r') as f:
-            coords = json.load(f)[0]
-        img = Image.open(path_to_img).convert('RGB')
-        self.images.append(ImageHandler(img, coords['x'], coords['y']))
+            coords = json.load(f)
+        if len(coords) > 0:
+            try:
+                img = Image.open(path_to_img).convert('RGB')
+                self.images.append(ImageHandler(img, coords[0]['x'], coords[0]['y']))
+            except Exception:
+                pass
 
     def predict(self) -> None:
         # init
