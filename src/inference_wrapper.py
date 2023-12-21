@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from os import listdir
+from os import listdir, makedirs
 from os.path import exists, getsize, join
 from typing import Any, Dict, Iterable, Tuple
 
@@ -27,7 +27,7 @@ class InferenceWrapper:
         # loop over tasks
         for folder, task_img_ids in tqdm(img_ids.items()):
             # init
-            inferencer = Inferencer(self.cfg, ['inception_v3'])
+            inferencer = Inferencer(self.cfg, 'inception_v3')
             # load data
             task_path = join(self.cfg['paths']['data'], folder)
             for img_id in task_img_ids:
@@ -44,6 +44,7 @@ class InferenceWrapper:
         self.wall = datetime.now() - start
 
     def save_coords(self) -> None:
+        makedirs(self.cfg['paths']['results'], exist_ok=True)
         path_to_df = join(self.cfg['paths']['results'], 'coords.csv')
         self.df_coords.to_csv(path_to_df, header=True)
 
@@ -54,6 +55,7 @@ class InferenceWrapper:
             f'Avg. distance:\t{self.avg_dist}',
             f'Wall time:\t{str(self.wall)[:-7]}'
         ]
+        makedirs(self.cfg['paths']['results'], exist_ok=True)
         path_to_metrics = join(self.cfg['paths']['results'], 'metrics.txt')
         with open(path_to_metrics, 'w') as f:
             f.writelines(metrics_str)
