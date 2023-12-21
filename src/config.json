@@ -1,0 +1,13 @@
+{
+    "paths": {
+        "data": "/root/tasks",
+        "models": "/root/models",
+        "results": "/root/results"
+    },
+    "inference": {
+        "batch_size": 16
+    },
+    "metrics": {
+        "accuracy_threshold": 0.1
+    }
+}
